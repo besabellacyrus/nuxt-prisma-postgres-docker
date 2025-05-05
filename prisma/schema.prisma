@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  // binaryTargets = ["native", "linux-musl", "linux-arm64-openssl-1.1.x"]
 }
 
 datasource db {
@@ -14,7 +15,11 @@ datasource db {
 }
 
 model User {
-  id    Int    @id @default(autoincrement())
-  name  String
-  email String @unique
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
 }
+
+

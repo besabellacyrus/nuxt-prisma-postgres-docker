@@ -5,13 +5,16 @@ services:
     build: .
     ports:
       - "3000:3000"
+      - "5555:5555"
     volumes:
       - .:/app
       - /app/node_modules
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/nuxtdb
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/nuxtdb
+    networks:
+      - app-network
 
   db:
     image: postgres:15
@@ -24,6 +27,11 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
 
 volumes:
   pgdata:
+
+networks:
+  app-network:
