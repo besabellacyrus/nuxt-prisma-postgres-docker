@@ -23,6 +23,10 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({
+  middleware: ['authenticated'],
+})
+
 const form = reactive({
   name: '',
   email: '',

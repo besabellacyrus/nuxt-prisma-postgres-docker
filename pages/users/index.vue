@@ -12,4 +12,7 @@
 
 <script setup lang="ts">
 const { data: users } = await useFetch('/api/users')
+definePageMeta({
+  middleware: ['authenticated'],
+})
 </script>
