@@ -5,8 +5,8 @@ import { AntDesignVueResolver } from "unplugin-vue-components/resolvers";
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
   devtools: { enabled: true },
-  modules: [],
-  css: [], // No need to manually import ant-design-vue CSS
+  modules: ["nuxt-auth-utils"],
+  css: ["ant-design-vue/dist/antd.css"],
   vite: {
     plugins: [
       Components({

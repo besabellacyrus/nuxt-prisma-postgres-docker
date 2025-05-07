@@ -1,17 +1,28 @@
 <template>
   <div class="login-container">
     <a-card class="login-card" title="Login">
-      <a-form layout="vertical">
+      <a-form
+        layout="vertical"
+        @finish="onSubmit"
+        :model="form"
+        :rules="rules">
         <a-form-item label="Email">
-          <a-input v-model="email" type="email" placeholder="Enter your email" />
+          <a-input v-model:value="form.email" type="email" placeholder="Enter your email" />
         </a-form-item>
 
         <a-form-item label="Password">
-          <a-input-password v-model="password" placeholder="Enter your password" />
+          <a-input-password v-model:value="form.password" placeholder="Enter your password" />
         </a-form-item>
 
         <a-form-item>
-          <a-button type="primary" block>Login</a-button>
+          <a-button
+            type="primary"
+            html-type="submit"
+            block
+            :loading="loading"
+          >
+            Login
+          </a-button>
         </a-form-item>
 
         <div class="footer-links">
@@ -25,10 +36,44 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+const { loggedIn, user, fetch: refreshSession } = useUserSession()
 
-const email = ref('')
-const password = ref('')
+const loading = ref(false)
+const error = ref('')
+
+const form = ref({
+  email: '',
+  password: '',
+})
+
+const rules = {
+  email: [{ required: true, message: 'Email is required', type: 'email' }],
+  password: [{ required: true, message: 'Password is required' }],
+}
+
+const onSubmit = async () => {
+  error.value = ''
+  loading.value = true;
+
+  try {
+    const res = await $fetch('/api/auth/login', {
+      method: 'POST',
+      body: form.value,
+      credentials: 'include',
+    });
+
+    console.log({ res, pushing:true });
+
+  if (res) {
+      await refreshSession()
+      await navigateTo('/dashboard')
+    }
+  } catch (err: any) {
+    error.value = err?.data?.statusMessage || 'Login failed'
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <style scoped>
