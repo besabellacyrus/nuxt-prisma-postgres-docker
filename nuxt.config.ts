@@ -6,7 +6,7 @@ export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
   devtools: { enabled: true },
   modules: ["nuxt-auth-utils"],
-  css: [], // No need to manually import ant-design-vue CSS
+  css: ["ant-design-vue/dist/antd.css"],
   vite: {
     plugins: [
       Components({
