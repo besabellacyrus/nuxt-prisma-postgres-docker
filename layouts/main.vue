@@ -2,16 +2,15 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { ref, watch, onMounted } from 'vue'
-
 import {
-  UserOutlined,
-  VideoCameraOutlined,
-  UploadOutlined,
-  MenuUnfoldOutlined,
-  MenuFoldOutlined,
+MenuUnfoldOutlined,
+MenuFoldOutlined,
+TeamOutlined,
+AppstoreOutlined,
+SettingOutlined
 } from '@ant-design/icons-vue';
-
 const { user, clear: clearSession } = useUserSession()
+
 
 const loading = ref(true)
 
@@ -52,28 +51,24 @@ watch(
       <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline">
         <a-menu-item key="/dashboard">
             <NuxtLink to="/dashboard">
-                <user-outlined />
+                <AppstoreOutlined />
                 <span>Dashboard</span>
             </NuxtLink>
         </a-menu-item>
         <a-menu-item key="/users">
             <NuxtLink to="/users">
-                <user-outlined />
+                <TeamOutlined />
                 <span>Users</span>
             </NuxtLink>
         </a-menu-item>
         <a-menu-item key="/settings">
             <NuxtLink to="/settings">
-                <user-outlined />
+                <SettingOutlined />
                 <span>Settings</span>
             </NuxtLink>
         </a-menu-item>
-        <a-menu-item key="4">
-          <upload-outlined />
-          <span>nav 3</span>
-        </a-menu-item>
-        <a-menu-item v-if="user" key="5">
-          <upload-outlined />
+        <a-menu-item v-if="user" key="logout">
+          <SettingOutlined />
           <span @click="logout">Logout</span>
         </a-menu-item>
       </a-menu>

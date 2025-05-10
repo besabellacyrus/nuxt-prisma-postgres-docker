@@ -1,24 +1,18 @@
 import { prisma } from "@/server/utils/prisma";
-import { z } from "zod";
-// import { hashPassword } from "~/server/utils/hash";
 
-const userSchema = z.object({
-  name: z.string().min(1),
-  email: z.string().email(),
-  password: z.string().min(6),
-});
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const parsed = userSchema.safeParse(body);
+  console.log("api called");
 
-  if (!parsed.success) {
+  const { firstName, lastName, email, password } = body;
+
+  if (firstName === "" || lastName === "" || email === "") {
     throw createError({
       statusCode: 400,
-      statusMessage: "Invalid input",
+      statusMessage: "Empty data.",
     });
   }
-  const { name, email, password } = parsed.data;
   const userExists = await prisma.user.findUnique({ where: { email }});
 
   if (userExists) {
@@ -31,11 +25,12 @@ export default defineEventHandler(async (event) => {
   const hashed = await hashPassword(password);
   const user = await prisma.user.create({
     data: {
-      name: name,
+      firstName: firstName,
+      lastName: lastName,
       email: email,
       password: hashed,
     },
   });
 
-  return { id: user.id, name: user.name, email: user.email };
+  return { id: user.id, firstName: user.firstName, lastName: user.lastName, email: user.email };
 });

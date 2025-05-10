@@ -25,11 +25,17 @@ declare module 'vue' {
     AMenu: typeof import('ant-design-vue/es')['Menu']
     AMenuItem: typeof import('ant-design-vue/es')['MenuItem']
     AModal: typeof import('ant-design-vue/es')['Modal']
+    APopconfirm: typeof import('ant-design-vue/es')['Popconfirm']
     ASkeleton: typeof import('ant-design-vue/es')['Skeleton']
     ASubMenu: typeof import('ant-design-vue/es')['SubMenu']
     ATable: typeof import('ant-design-vue/es')['Table']
+    ATabPane: typeof import('ant-design-vue/es')['TabPane']
+    ATabs: typeof import('ant-design-vue/es')['Tabs']
     ATypographyLink: typeof import('ant-design-vue/es')['TypographyLink']
+    DeleteTwoTone: typeof import('@ant-design/icons-vue')['DeleteTwoTone']
+    EditOutlined: typeof import('@ant-design/icons-vue')['EditOutlined']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    UndoOutlined: typeof import('@ant-design/icons-vue')['UndoOutlined']
   }
 }
