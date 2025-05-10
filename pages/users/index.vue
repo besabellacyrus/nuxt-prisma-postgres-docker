@@ -75,18 +75,18 @@ const deletedUserPagination = ref({
 
 const fetchDeletedUsers = async () => {
   deletedUserLoading.value = true
-  loading.value = true
-  const { data } = await useFetch(`/api/users`, {
-    params: {
+
+const query  = new URLSearchParams({
       page: deletedUserPagination.value.current,
       pageSize: deletedUserPagination.value.pageSize,
       search: searchQuery.value,
-      active: false
-    },
+      active: 'false'
   })
 
-  deletedUsers.value = data.value?.data || []
-  deletedUserTotal.value = data.value?.total || 0
+  const res = await $fetch(`/api/users?${query.toString()}`)
+
+  deletedUsers.value = res?.data || []
+  deletedUserTotal.value = res?.total || 0
   deletedUserPagination.value.total = deletedUserTotal.value
   deletedUserLoading.value = false
 }
@@ -94,16 +94,18 @@ const fetchDeletedUsers = async () => {
 
 const fetchUsers = async () => {
   loading.value = true
-  const { data } = await useFetch(`/api/users`, {
-    params: {
+
+  const query  = new URLSearchParams({
       page: pagination.value.current,
       pageSize: pagination.value.pageSize,
       search: searchQuery.value,
-      active: true
-    },
+      active: 'true'
   })
-  users.value = data.value?.data || []
-  total.value = data.value?.total || 0
+
+  const res = await $fetch(`/api/users?${query.toString()}`)
+
+  users.value = res?.data || []
+  total.value = res?.total || 0
   pagination.value.total = total.value
   loading.value = false
 }
