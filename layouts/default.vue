@@ -1,7 +1,7 @@
 <template>
-  <div>
-    <slot />
-  </div>
+   <div>
+    <NuxtPage />
+   </div>
 </template>
 <script setup lang="ts">
 // const { user, clear: clearSession } = useUserSession()

@@ -1,10 +1,13 @@
 <template>
-  <div class="p-8">
-    <h1 class="text-2xl font-bold mb-4">Index View</h1>
-
-  </div>
+<client-only>
+  <a-button @click="showModal = true">Open Modal saa</a-button>
+  <a-modal v-model:visible="showModal" title="My Modal">
+    <p>Modal content here</p>
+  </a-modal>
+</client-only>
 </template>
 
-<script setup lang="ts">
-
+<script setup>
+import { ref } from 'vue'
+const showModal = ref(false)
 </script>
