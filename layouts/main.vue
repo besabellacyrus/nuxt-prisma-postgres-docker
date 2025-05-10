@@ -51,25 +51,33 @@ watch(
       <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline">
         <a-menu-item key="/dashboard">
             <NuxtLink to="/dashboard">
+              <div class="flex items-center">
                 <AppstoreOutlined />
                 <span>Dashboard</span>
+              </div>
             </NuxtLink>
         </a-menu-item>
         <a-menu-item key="/users">
             <NuxtLink to="/users">
+              <div class="flex items-center">
                 <TeamOutlined />
                 <span>Users</span>
+              </div>
             </NuxtLink>
         </a-menu-item>
         <a-menu-item key="/settings">
             <NuxtLink to="/settings">
+              <div class="flex items-center">
                 <SettingOutlined />
                 <span>Settings</span>
+              </div>
             </NuxtLink>
         </a-menu-item>
         <a-menu-item v-if="user" key="logout">
-          <SettingOutlined />
-          <span @click="logout">Logout</span>
+          <div class="flex items-center">
+            <LogoutOutlined />
+            <span @click="logout">Logout</span>
+          </div>
         </a-menu-item>
       </a-menu>
     </a-layout-sider>

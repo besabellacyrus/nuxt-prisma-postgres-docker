@@ -20,10 +20,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const user = await prisma.user.findUnique({
-    where: { email: parsed.data.email },
+    where: { email: parsed.data.email, deletedAt: null },
   });
-
-  console.log({ user })
 
   if (!user) {
     throw createError({ statusCode: 401, statusMessage: "User not found" });
@@ -50,6 +48,8 @@ export default defineEventHandler(async (event) => {
    await setUserSession(event, {
      user: {
        email: user.email,
+       firstName: user.firstName,
+       lastName: user.lastName,
      },
    });
 
@@ -66,6 +66,8 @@ export default defineEventHandler(async (event) => {
     user: {
       id: user.id,
       email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
     },
   };
 });
