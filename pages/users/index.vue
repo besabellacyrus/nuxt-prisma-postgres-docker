@@ -131,15 +131,18 @@ const handleOk = async () => {
 
 
     message.success(isEdit.value ? "User updated successfully" : 'User added successfully')
-    formState.value = {}
+
+    fetchUsers() // Refresh table
     showModal.value = false
     isEdit.value = false
+    formState.value = {}
     formRef.value.resetFields()
-    fetchUsers() // Refresh table
   } catch (err) {
     message.error(isEdit.value ? 'Failed to edit user' : 'Failed to add user')
   } finally {
+
     loading.value = false
+
   }
 }
 
@@ -161,27 +164,6 @@ const deletedUserColumns = [
   { title: 'Operation', dataIndex: 'operation', key: 'operation' }
 ]
 
-const addUserRules = {
-  firstName: [{ required: true, message: 'First Name is required' }],
-  lastName: [{ required: true, message: 'Last Name is required' }],
-  email: [
-    { required: true, message: 'Email is required' },
-    { type: 'email', message: 'Invalid email' }
-  ],
-  password: [
-    { required: true, message: 'Password is required' },
-  ]
-}
-
-const editUserRules = {
-  firstName: [{ required: true, message: 'First Name is required' }],
-  lastName: [{ required: true, message: 'Last Name is required' }],
-  email: [
-    { required: true, message: 'Email is required' },
-    { type: 'email', message: 'Invalid email' }
-  ]
-}
-
 function showRestoreConfirm(userId: string) {
   Modal.confirm({
     title: 'Are you sure you want to Restore this user?',
@@ -192,12 +174,7 @@ function showRestoreConfirm(userId: string) {
     cancelText: 'Cancel',
     async onOk() {
       try {
-        const { data, error } = await useFetch(`/api/users/${userId}`, {
-          method: 'DELETE',
-          body: formState.value
-        })
-
-        const restoredUser  = await $fetch('/api/users/restore', {
+        await $fetch('/api/users/restore', {
           method: 'POST',
           body: { id: userId }
         })
