@@ -111,8 +111,8 @@ const showEditModal = (record: any) => {
 }
 
 const handleOk = async () => {
+  console.log('handle OK run')
   try {
-    console.log('ok called');
     await formRef.value.validate()
     loading.value = true
 
@@ -123,22 +123,21 @@ const handleOk = async () => {
       val: formState.value
     })
 
-    const { data, error } = await useFetch(url, {
+    await $fetch(url, {
       method: method,
       body: formState.value,
       server: false
     })
 
-    if (error.value) {
-      message.error(isEdit.value ? 'Failed to edit user' : 'Failed to add user')
-    } else {
-      message.success(isEdit.value ? "User updated successfully" : 'User added successfully')
-      formRef.value.resetFields()
-      showModal.value = false
-      isEdit.value = false
-      formState.value = {}
-    }
+
+    message.success(isEdit.value ? "User updated successfully" : 'User added successfully')
+    formState.value = {}
+    showModal.value = false
+    isEdit.value = false
+    formRef.value.resetFields()
     fetchUsers() // Refresh table
+  } catch (err) {
+    message.error(isEdit.value ? 'Failed to edit user' : 'Failed to add user')
   } finally {
     loading.value = false
   }
@@ -281,6 +280,7 @@ const confirmPasswordValidator =  (_: any, value: any) => {
   <a-tabs v-model:activeKey="activeKey">
     <a-tab-pane key="1" tab="Users">
       <a-table
+        :key="'users-table'"
         :columns="userColumns"
         :dataSource="users"
         :pagination="pagination"
@@ -297,8 +297,9 @@ const confirmPasswordValidator =  (_: any, value: any) => {
         </template>
       </a-table>
     </a-tab-pane>
-    <a-tab-pane key="2" tab="Deleted">
+    <a-tab-pane key="2" tab="Archived">
       <a-table
+        :key="'archived-users-table'"
         :columns="deletedUserColumns"
         :dataSource="deletedUsers"
         :pagination="deletedUserPagination"

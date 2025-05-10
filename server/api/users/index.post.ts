@@ -3,10 +3,16 @@ import { prisma } from "@/server/utils/prisma";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  console.log({ body })
   console.log("api called");
 
   const { firstName, lastName, email, password } = body;
+
+  if (firstName === "" || lastName === "" || email === "") {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Empty data.",
+    });
+  }
   const userExists = await prisma.user.findUnique({ where: { email }});
 
   if (userExists) {
