@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // import { ref, watch } from 'vue';
+import { useDebounceFn } from '@vueuse/core'
 import { useFetch } from '#app'
 import { message, Modal } from 'ant-design-vue'
 import { DeleteTwoTone, ExclamationCircleOutlined } from '@ant-design/icons-vue';
@@ -18,8 +19,32 @@ const formState = ref({
   password: '',
 })
 
-const users = ref([])
-const deletedUsers = ref([])
+const users = ref([]);
+const deletedUsers = ref([]);
+
+const searchQuery = ref('');
+
+const filteredUsers = computed(() => {
+  if (!searchQuery.value.trim()) return users.value
+  return users.value.filter((user: { firstName: string; lastName: string; email: string; }) => {
+    const first = user.firstName?.toLowerCase() || ''
+    const last = user.lastName?.toLowerCase() || ''
+    const email = user.email?.toLowerCase() || ''
+    const query = searchQuery.value.toLowerCase()
+    return first.includes(query) || last.includes(query) || email.includes(query)
+  })
+})
+
+const filteredDeletedUsers = computed(() => {
+  if (!searchQuery.value.trim()) return deletedUsers.value
+  return deletedUsers.value.filter((user: { firstName: string; lastName: string; email: string; }) => {
+    const first = user.firstName?.toLowerCase() || ''
+    const last = user.lastName?.toLowerCase() || ''
+    const email = user.email?.toLowerCase() || ''
+    const query = searchQuery.value.toLowerCase()
+    return first.includes(query) || last.includes(query) || email.includes(query)
+  })
+})
 
 const total = ref(0)
 const deletedUserTotal = ref(0)
@@ -50,10 +75,13 @@ const deletedUserPagination = ref({
 
 const fetchDeletedUsers = async () => {
   deletedUserLoading.value = true
-  const { data } = await useFetch(`/api/users/deletedUsers`, {
+  loading.value = true
+  const { data } = await useFetch(`/api/users`, {
     params: {
       page: deletedUserPagination.value.current,
       pageSize: deletedUserPagination.value.pageSize,
+      search: searchQuery.value,
+      active: false
     },
   })
 
@@ -70,6 +98,8 @@ const fetchUsers = async () => {
     params: {
       page: pagination.value.current,
       pageSize: pagination.value.pageSize,
+      search: searchQuery.value,
+      active: true
     },
   })
   users.value = data.value?.data || []
@@ -77,6 +107,13 @@ const fetchUsers = async () => {
   pagination.value.total = total.value
   loading.value = false
 }
+
+const onSearch = useDebounceFn(() => {
+  pagination.current = 1 // reset to first page on new search
+  fetchUsers()
+}, 300)
+
+watchEffect(fetchUsers)
 
 // Watch pagination changes
 watch(() => [pagination.value.current, pagination.value.pageSize],
@@ -131,15 +168,18 @@ const handleOk = async () => {
 
 
     message.success(isEdit.value ? "User updated successfully" : 'User added successfully')
-    formState.value = {}
+
+    fetchUsers() // Refresh table
     showModal.value = false
     isEdit.value = false
+    formState.value = {}
     formRef.value.resetFields()
-    fetchUsers() // Refresh table
   } catch (err) {
     message.error(isEdit.value ? 'Failed to edit user' : 'Failed to add user')
   } finally {
+
     loading.value = false
+
   }
 }
 
@@ -154,33 +194,20 @@ const userColumns = [
   { title: 'Operation', dataIndex: 'operation', key: 'operation' }
 ]
 
+const userColumnsCsv = [
+  { title: 'UUID', dataIndex: 'id', key: 'id' },
+  { title: 'First Name', dataIndex: 'firstName', key: 'firstName' },
+  { title: 'Last Name', dataIndex: 'lastName', key: 'lastName' },
+  { title: 'Email', dataIndex: 'email', key: 'email' },
+  { title: 'Created At', dataIndex: 'createdAt', key: 'createdAt' },
+]
+
 const deletedUserColumns = [
   { title: 'First Name', dataIndex: 'firstName', key: 'firstName' },
   { title: 'Last Name', dataIndex: 'lastName', key: 'lastName' },
   { title: 'Email', dataIndex: 'email', key: 'email' },
   { title: 'Operation', dataIndex: 'operation', key: 'operation' }
 ]
-
-const addUserRules = {
-  firstName: [{ required: true, message: 'First Name is required' }],
-  lastName: [{ required: true, message: 'Last Name is required' }],
-  email: [
-    { required: true, message: 'Email is required' },
-    { type: 'email', message: 'Invalid email' }
-  ],
-  password: [
-    { required: true, message: 'Password is required' },
-  ]
-}
-
-const editUserRules = {
-  firstName: [{ required: true, message: 'First Name is required' }],
-  lastName: [{ required: true, message: 'Last Name is required' }],
-  email: [
-    { required: true, message: 'Email is required' },
-    { type: 'email', message: 'Invalid email' }
-  ]
-}
 
 function showRestoreConfirm(userId: string) {
   Modal.confirm({
@@ -192,12 +219,7 @@ function showRestoreConfirm(userId: string) {
     cancelText: 'Cancel',
     async onOk() {
       try {
-        const { data, error } = await useFetch(`/api/users/${userId}`, {
-          method: 'DELETE',
-          body: formState.value
-        })
-
-        const restoredUser  = await $fetch('/api/users/restore', {
+        await $fetch('/api/users/restore', {
           method: 'POST',
           body: { id: userId }
         })
@@ -247,15 +269,13 @@ function showDeleteConfirm(userId: string) {
     cancelText: 'Cancel',
     async onOk() {
       try {
-        const { data, error } = await useFetch(`/api/users/${userId}`, {
+        await $fetch(`/api/users/${userId}`, {
           method: 'DELETE',
           body: formState.value
         })
+        fetchUsers()
+        fetchDeletedUsers()
         message.success('User deleted successfully')
-        if (!error.value) {
-          fetchUsers()
-          fetchDeletedUsers()
-        }
       } catch (err) {
         console.error('Failed to delete user:', err)
       }
@@ -269,12 +289,44 @@ const confirmPasswordValidator =  (_: any, value: any) => {
   }
   return Promise.reject('Passwords do not match')
 }
+
+function exportToCSV() {
+  const headers = userColumnsCsv.map(col => col.title)
+  const keys = userColumnsCsv.map(col => col.dataIndex)
+
+  const csvRows = [
+    headers.join(','), // Header row
+    ...users.value.map(row => keys.map(key => `"${(row[key] ?? '')}"`).join(','))
+  ]
+
+  const csvContent = csvRows.join('\n')
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+
+  const link = document.createElement('a')
+  link.href = url
+  link.setAttribute('download', 'users.csv')
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
 </script>
 
 <template>
   <div class="table-header">
-    <a-button type="primary" @click="showAddModal">
-      Add User
+    <a-input
+      v-model:value="searchQuery"
+      placeholder="Search first, last name or email"
+      allow-clear
+      class="mb-4 w-64 search-input"
+      @input="onSearch"
+    />
+    <a-button class="pl-2" type="primary" @click="showAddModal">
+      <UserAddOutlined /> Add
+    </a-button>
+    <a-button class="export-btn" type="primary" @click="exportToCSV">
+      <CloudDownloadOutlined /> Export
     </a-button>
   </div>
   <a-tabs v-model:activeKey="activeKey">
@@ -282,7 +334,7 @@ const confirmPasswordValidator =  (_: any, value: any) => {
       <a-table
         :key="'users-table'"
         :columns="userColumns"
-        :dataSource="users"
+        :dataSource="filteredUsers"
         :pagination="pagination"
         :loading="loading"
         @change="handleTableChange"
@@ -301,7 +353,7 @@ const confirmPasswordValidator =  (_: any, value: any) => {
       <a-table
         :key="'archived-users-table'"
         :columns="deletedUserColumns"
-        :dataSource="deletedUsers"
+        :dataSource="filteredDeletedUsers"
         :pagination="deletedUserPagination"
         :loading="deletedUserLoading"
         @change="handleTableChangeDeletedUsers"
@@ -367,6 +419,14 @@ const confirmPasswordValidator =  (_: any, value: any) => {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 16px;
+}
+
+.export-btn {
+  margin-left: 10px;
+}
+
+.search-input {
+  margin-right: 10px;
 }
 
 </style>
