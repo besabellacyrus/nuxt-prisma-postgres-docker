@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // import { ref, watch } from 'vue';
+import { useDebounceFn } from '@vueuse/core'
 import { useFetch } from '#app'
 import { message, Modal } from 'ant-design-vue'
 import { DeleteTwoTone, ExclamationCircleOutlined } from '@ant-design/icons-vue';
@@ -74,10 +75,13 @@ const deletedUserPagination = ref({
 
 const fetchDeletedUsers = async () => {
   deletedUserLoading.value = true
-  const { data } = await useFetch(`/api/users/deletedUsers`, {
+  loading.value = true
+  const { data } = await useFetch(`/api/users`, {
     params: {
       page: deletedUserPagination.value.current,
       pageSize: deletedUserPagination.value.pageSize,
+      search: searchQuery.value,
+      active: false
     },
   })
 
@@ -94,6 +98,8 @@ const fetchUsers = async () => {
     params: {
       page: pagination.value.current,
       pageSize: pagination.value.pageSize,
+      search: searchQuery.value,
+      active: true
     },
   })
   users.value = data.value?.data || []
@@ -101,6 +107,13 @@ const fetchUsers = async () => {
   pagination.value.total = total.value
   loading.value = false
 }
+
+const onSearch = useDebounceFn(() => {
+  pagination.current = 1 // reset to first page on new search
+  fetchUsers()
+}, 300)
+
+watchEffect(fetchUsers)
 
 // Watch pagination changes
 watch(() => [pagination.value.current, pagination.value.pageSize],
