@@ -7,18 +7,15 @@ export default defineEventHandler(async (event) => {
   const id = event.context.params.id;
   const body = await readBody(event);
 
-  console.log('api callllll')
-
   const { firstName, lastName, email } = body;
 
-  if (firstName === "" || lastName === "" || email === "") {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Empty data.",
-    });
-  }
-
   if (method === "PUT") {
+    if (firstName === "" || lastName === "" || email === "") {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Empty data.",
+      });
+    }
     const existing = await prisma.user.findFirst({
       where: {
         email: email,
