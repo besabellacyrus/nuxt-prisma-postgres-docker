@@ -193,7 +193,7 @@ const userColumns = [
   { title: 'First Name', dataIndex: 'firstName', key: 'firstName' },
   { title: 'Last Name', dataIndex: 'lastName', key: 'lastName' },
   { title: 'Email', dataIndex: 'email', key: 'email' },
-  { title: 'Operation', dataIndex: 'operation', key: 'operation' }
+  { title: 'Actions', dataIndex: 'actions', key: 'actions' }
 ]
 
 const userColumnsCsv = [
@@ -211,11 +211,11 @@ const deletedUserColumns = [
   { title: 'Operation', dataIndex: 'operation', key: 'operation' }
 ]
 
-function showRestoreConfirm(userId: string) {
+function showRestoreConfirm(userId: string, name: string) {
   Modal.confirm({
     title: 'Are you sure you want to Restore this user?',
     icon: h(ExclamationCircleOutlined),
-    content: 'This action will restore the user.',
+    content: `This action will restore "${name}".`,
     okText: 'Yes',
     okType: 'danger',
     cancelText: 'Cancel',
@@ -236,11 +236,11 @@ function showRestoreConfirm(userId: string) {
   })
 }
 
-function showPermanentDeleteConfirm(userId: string) {
+function showPermanentDeleteConfirm(userId: string, name: string) {
   Modal.confirm({
     title: 'Are you sure you want to Permanent Delete this user?',
     icon: h(ExclamationCircleOutlined),
-    content: 'This action will permanent delete the user.',
+    content: `This action will permanent delete "${name}".`,
     okText: 'Yes',
     okType: 'danger',
     cancelText: 'Cancel',
@@ -261,11 +261,11 @@ function showPermanentDeleteConfirm(userId: string) {
   })
 }
 
-function showDeleteConfirm(userId: string) {
+function showDeleteConfirm(userId: string, name: string ) {
   Modal.confirm({
-    title: 'Are you sure you want to Delete this user?',
+    title: 'Are you sure you want to Archive this user?',
     icon: h(ExclamationCircleOutlined),
-    content: 'This action will soft-delete the user.',
+    content: `This action will archive "${name}".`,
     okText: 'Yes',
     okType: 'danger',
     cancelText: 'Cancel',
@@ -325,10 +325,12 @@ function exportToCSV() {
       @input="onSearch"
     />
     <a-button class="pl-2" type="primary" @click="showAddModal">
-      <UserAddOutlined /> Add
+        <UserAddOutlined />
+        <span>Add</span>
     </a-button>
     <a-button class="export-btn" type="primary" @click="exportToCSV">
-      <CloudDownloadOutlined /> Export
+        <CloudDownloadOutlined />
+        <span>Export</span>
     </a-button>
   </div>
   <a-tabs v-model:activeKey="activeKey">
@@ -343,10 +345,15 @@ function exportToCSV() {
         rowKey="id"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'operation'">
-            <a><DeleteTwoTone @click="showDeleteConfirm(record.id)" two-tone-color="#FF0000"/></a>
-             |
-            <a><EditOutlined  @click="showEditModal(record)" two-tone-color="#008000"/></a>
+          <template v-if="column.key === 'actions'" >
+            <div class="flex">
+              <a-button class="mr-20" @click="showEditModal(record)">
+                Edit
+              </a-button>
+              <a-button @click="showDeleteConfirm(record.id, record.firstName)" danger >
+                Archive
+              </a-button>
+            </div>
           </template>
         </template>
       </a-table>
@@ -363,9 +370,14 @@ function exportToCSV() {
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'operation'">
-            <a><DeleteTwoTone @click="showPermanentDeleteConfirm(record.id)" two-tone-color="#FF0000"/></a>
-            |
-            <a><UndoOutlined  @click="showRestoreConfirm(record.id)" two-tone-color="#008000"/></a>
+            <div class="flex">
+              <a-button class="mr-20" @click="showRestoreConfirm(record.id, record.firstName)">
+                Restore
+              </a-button>
+              <a-button @click="showPermanentDeleteConfirm(record.id, record.firstName)" danger >
+                Delete
+              </a-button>
+            </div>
           </template>
         </template>
       </a-table>
@@ -431,4 +443,7 @@ function exportToCSV() {
   margin-right: 10px;
 }
 
+.mr-20 {
+  margin-right: 20px;
+}
 </style>

@@ -1,14 +1,8 @@
 <template>
-  <UModal title="Modal with title">
-    <UButton label="Open" color="neutral" variant="subtle" />
-
-    <template #body>
-      <Placeholder class="h-48" />
-    </template>
-  </UModal>
+  <div class="p-8 bg-blue-500 text-white rounded-lg">
+    Tailwind is working!
+  </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-const show = ref(false)
 </script>

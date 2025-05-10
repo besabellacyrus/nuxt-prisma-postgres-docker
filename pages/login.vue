@@ -36,6 +36,7 @@
 </template>
 
 <script setup lang="ts">
+import { message } from 'ant-design-vue'
 const { loggedIn, user, fetch: refreshSession } = useUserSession()
 
 const loading = ref(false)
@@ -70,6 +71,7 @@ const onSubmit = async () => {
     }
   } catch (err: any) {
     error.value = err?.data?.statusMessage || 'Login failed'
+    message.error('Something went wrong. Please try again.')
   } finally {
     loading.value = false
   }
