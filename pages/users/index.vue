@@ -140,6 +140,7 @@ const handleTableChangeDeletedUsers = (paginationConfig: { current: any; pageSiz
 
 const showAddModal = () => {
   showModal.value = true
+  isEdit.value = false
 }
 
 const showEditModal = (record: any) => {
@@ -162,26 +163,24 @@ const handleOk = async () => {
       val: formState.value
     })
 
-    await $fetch(url, {
+    const user = await $fetch(url, {
       method: method,
       body: formState.value,
       server: false
     })
 
-
-    message.success(isEdit.value ? "User updated successfully" : 'User added successfully')
-
-    fetchUsers() // Refresh table
-    showModal.value = false
-    isEdit.value = false
-    formState.value = {}
-    formRef.value.resetFields()
+    console.log({ user })
+    if (user) {
+      showModal.value = false
+      message.success(isEdit.value ? "User updated successfully" : 'User added successfully')
+      fetchUsers() // Refresh table
+      formState.value = {}
+      formRef.value.resetFields()
+    }
   } catch (err) {
     message.error(isEdit.value ? 'Failed to edit user' : 'Failed to add user')
   } finally {
-
     loading.value = false
-
   }
 }
 
@@ -325,12 +324,16 @@ function exportToCSV() {
       @input="onSearch"
     />
     <a-button class="pl-2" type="primary" @click="showAddModal">
+      <div class="flex justify-center items-center space-x-2">
         <UserAddOutlined />
         <span>Add</span>
+      </div>
     </a-button>
     <a-button class="export-btn" type="primary" @click="exportToCSV">
+      <div class="flex justify-center items-center space-x-2">
         <CloudDownloadOutlined />
         <span>Export</span>
+      </div>
     </a-button>
   </div>
   <a-tabs v-model:activeKey="activeKey">
@@ -446,4 +449,6 @@ function exportToCSV() {
 .mr-20 {
   margin-right: 20px;
 }
+
+
 </style>

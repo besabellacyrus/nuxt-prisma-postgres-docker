@@ -7,6 +7,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ["~/assets/css/main.css"],
   modules: ["nuxt-auth-utils", "@nuxt/ui"],
+  plugins: ['@/plugins/antd'],
   vite: {
     plugins: [
       Components({
