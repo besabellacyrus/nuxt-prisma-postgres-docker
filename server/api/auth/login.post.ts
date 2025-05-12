@@ -21,16 +21,14 @@ export default defineEventHandler(async (event) => {
 
   const user = await prisma.user.findUnique({
     where: { email: parsed.data.email, deletedAt: null },
+    include: { role: true },
   });
-
+  console.log({ user });
   if (!user) {
     throw createError({ statusCode: 401, statusMessage: "User not found" });
   }
 
-  const isMatch = await bcrypt.compare(
-    parsed.data.password,
-    user.password
-  );
+  const isMatch = await bcrypt.compare(parsed.data.password, user.password);
 
   if (!isMatch) {
     throw createError({
@@ -39,26 +37,27 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-   const token = jwt.sign(
-     { id: user.id, email: user.email },
-     process.env.JWT_SECRET!,
-     { expiresIn: "7d" }
-   );
+  const token = jwt.sign(
+    { id: user.id, email: user.email },
+    process.env.JWT_SECRET!,
+    { expiresIn: "7d" }
+  );
 
-   await setUserSession(event, {
-     user: {
-       email: user.email,
-       firstName: user.firstName,
-       lastName: user.lastName,
-     },
-   });
+  await setUserSession(event, {
+    user: {
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      roleName: user.role?.name,
+    },
+  });
 
-   setCookie(event, "token", token, {
-     httpOnly: true,
-     sameSite: "strict",
-     path: "/",
-     maxAge: 60 * 60 * 24 * 7, // 7 days
-   });
+  setCookie(event, "token", token, {
+    httpOnly: true,
+    sameSite: "strict",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+  });
 
   return {
     message: "Login successful",
@@ -68,6 +67,7 @@ export default defineEventHandler(async (event) => {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
+      roleName: user.role?.name,
     },
   };
 });

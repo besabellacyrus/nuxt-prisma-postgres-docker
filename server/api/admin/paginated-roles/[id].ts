@@ -1,8 +1,11 @@
+// import { PrismaClient } from "@prisma/client";
+
+// const prisma = new PrismaClient();
 import { prisma } from "@/server/utils/prisma";
 
 export default defineEventHandler(async (event) => {
   const method = event.method;
-  const id = event.context.params.id;
+  const id = Number(event.context.params.id);
   const body = await readBody(event);
 
   const { firstName, lastName, email } = body;
@@ -41,12 +44,21 @@ export default defineEventHandler(async (event) => {
   }
 
   if (method === "DELETE") {
-    const user = await prisma.user.update({
-      where: { id },
-      data: { deletedAt: new Date() },
+    const role = await prisma.role.findUnique({
+      where: { id }, // use roleId or name
+      include: { users: true },
     });
 
-    return user;
+    if (role && role.users.length === 0) {
+      await prisma.role.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      });
+    } else {
+      throw new Error(
+        "Cannot update role — it is assigned to one or more users."
+      );
+    }
   }
 
   return { error: "Method not supported" };

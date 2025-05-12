@@ -1,1 +1,22 @@
-/* @import "tailwindcss"; */
+@import "tailwindcss";
+
+button {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.ant-modal-footer,
+.ant-modal-confirm-btns {
+  display: flex !important;
+}
+
+.ant-modal-footer {
+  justify-content: flex-end !important;
+}
+
+.ant-message-notice {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}

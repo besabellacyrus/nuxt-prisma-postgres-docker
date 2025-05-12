@@ -37,9 +37,8 @@ export default defineEventHandler(async (event) => {
   const page = Number(query.page) || 1;
   const pageSize = Number(query.pageSize) || 10;
   const search = String(query.search || "").toLowerCase();
-  const isActive = query.active === 'true'
+  const isActive = query.active === "true";
 
-  console.log({ isActive  });
   const where = {
     deletedAt: isActive ? null : { not: null },
     ...(search
@@ -59,6 +58,7 @@ export default defineEventHandler(async (event) => {
       skip: (page - 1) * pageSize,
       take: pageSize,
       orderBy: { createdAt: "desc" },
+      include: { role: true },
     }),
     prisma.user.count({ where }),
   ]);
@@ -68,4 +68,3 @@ export default defineEventHandler(async (event) => {
     total,
   };
 });
-

@@ -1,6 +1,5 @@
 import { prisma } from "@/server/utils/prisma";
 
-
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   console.log("api called");
@@ -13,7 +12,7 @@ export default defineEventHandler(async (event) => {
       statusMessage: "Empty data.",
     });
   }
-  const userExists = await prisma.user.findUnique({ where: { email }});
+  const userExists = await prisma.user.findUnique({ where: { email } });
 
   if (userExists) {
     throw createError({
@@ -23,6 +22,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const hashed = await hashPassword(password);
+
   const user = await prisma.user.create({
     data: {
       firstName: firstName,
@@ -32,5 +32,10 @@ export default defineEventHandler(async (event) => {
     },
   });
 
-  return { id: user.id, firstName: user.firstName, lastName: user.lastName, email: user.email };
+  return {
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+  };
 });

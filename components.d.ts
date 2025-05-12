@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AAvatar: typeof import('ant-design-vue/es')['Avatar']
     ABreadcrumb: typeof import('ant-design-vue/es')['Breadcrumb']
     ABreadcrumbItem: typeof import('ant-design-vue/es')['BreadcrumbItem']
     AButton: typeof import('ant-design-vue/es')['Button']
@@ -26,6 +27,8 @@ declare module 'vue' {
     AMenuItem: typeof import('ant-design-vue/es')['MenuItem']
     AModal: typeof import('ant-design-vue/es')['Modal']
     APopconfirm: typeof import('ant-design-vue/es')['Popconfirm']
+    AppstoreOutlined: typeof import('@ant-design/icons-vue')['AppstoreOutlined']
+    ASelect: typeof import('ant-design-vue/es')['Select']
     ASkeleton: typeof import('ant-design-vue/es')['Skeleton']
     ASubMenu: typeof import('ant-design-vue/es')['SubMenu']
     ATable: typeof import('ant-design-vue/es')['Table']
@@ -37,9 +40,14 @@ declare module 'vue' {
     DeleteTwoTone: typeof import('@ant-design/icons-vue')['DeleteTwoTone']
     EditOutlined: typeof import('@ant-design/icons-vue')['EditOutlined']
     LogoutOutlined: typeof import('@ant-design/icons-vue')['LogoutOutlined']
+    MenuFoldOutlined: typeof import('@ant-design/icons-vue')['MenuFoldOutlined']
+    MenuUnfoldOutlined: typeof import('@ant-design/icons-vue')['MenuUnfoldOutlined']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SettingOutlined: typeof import('@ant-design/icons-vue')['SettingOutlined']
+    TeamOutlined: typeof import('@ant-design/icons-vue')['TeamOutlined']
     UndoOutlined: typeof import('@ant-design/icons-vue')['UndoOutlined']
     UserAddOutlined: typeof import('@ant-design/icons-vue')['UserAddOutlined']
+    UserOutlined: typeof import('@ant-design/icons-vue')['UserOutlined']
   }
 }

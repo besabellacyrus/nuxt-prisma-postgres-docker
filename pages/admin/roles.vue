@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// import { ref, watch } from 'vue';
 import { useDebounceFn } from "@vueuse/core";
 import { useFetch } from "#app";
 import { message, Modal } from "ant-design-vue";
@@ -9,7 +8,7 @@ import {
 } from "@ant-design/icons-vue";
 
 definePageMeta({
-  middleware: ["authenticated"],
+  middleware: ["authenticated", "admin"],
   layout: "main",
 });
 
@@ -24,6 +23,8 @@ const formState = ref({
 
 const users = ref([]);
 const deletedUsers = ref([]);
+
+const roles = ref([]);
 
 const searchQuery = ref("");
 
@@ -40,6 +41,15 @@ const filteredUsers = computed(() => {
       );
     }
   );
+});
+
+const filteredRoles = computed(() => {
+  if (!searchQuery.value.trim()) return roles.value;
+  return roles.value.filter((role: { name: string }) => {
+    const name = role.name?.toLowerCase() || "";
+    const query = searchQuery.value.toLowerCase();
+    return name.includes(query);
+  });
 });
 
 const filteredDeletedUsers = computed(() => {
@@ -130,12 +140,34 @@ const fetchUsers = async () => {
   loading.value = false;
 };
 
+const fetchRoles = async () => {
+  loading.value = true;
+
+  const query = new URLSearchParams({
+    page: pagination.value.current,
+    pageSize: pagination.value.pageSize,
+    search: searchQuery.value,
+    active: "true",
+  });
+
+  let res = await $fetch(`/api/admin/paginated-roles?${query.toString()}`);
+  console.log({ res });
+  roles.value = res?.data || [];
+  total.value = res?.total || 0;
+  pagination.value.total = total.value;
+  loading.value = false;
+};
+
 const onSearch = useDebounceFn(() => {
-  pagination.current = 1; // reset to first page on new search
-  fetchUsers();
+  pagination.current = 1;
+  fetchRoles();
 }, 300);
 
 watchEffect(fetchUsers);
+
+watch(() => [pagination.value.current, pagination.value.pageSize], fetchRoles, {
+  immediate: true,
+});
 
 // Watch pagination changes
 watch(() => [pagination.value.current, pagination.value.pageSize], fetchUsers, {
@@ -186,32 +218,32 @@ const handleOk = async () => {
     loading.value = true;
 
     const url = isEdit.value
-      ? `/api/users/${formState.value.id}`
-      : "/api/users";
+      ? `/api/admin/paginated-roles/${formState.value.id}`
+      : "/api/admin/paginated-roles";
     const method = isEdit.value ? "PUT" : "POST";
 
     console.log({
       val: formState.value,
     });
 
-    const user = await $fetch(url, {
+    const role = await $fetch(url, {
       method: method,
       body: formState.value,
       server: false,
     });
 
-    console.log({ user });
-    if (user) {
+    console.log({ role });
+    if (role) {
       showModal.value = false;
       message.success(
-        isEdit.value ? "User updated successfully" : "User added successfully"
+        isEdit.value ? "Role updated successfully" : "Role added successfully"
       );
-      fetchUsers(); // Refresh table
+      fetchRoles(); // Refresh table
       formState.value = {};
       formRef.value.resetFields();
     }
   } catch (err) {
-    message.error(isEdit.value ? "Failed to edit user" : "Failed to add user");
+    message.error(err.data?.message);
   } finally {
     loading.value = false;
   }
@@ -220,6 +252,20 @@ const handleOk = async () => {
 const handleCancel = () => {
   showModal.value = false;
 };
+
+const roleColumns = [
+  { title: "Name", dataIndex: "name", key: "name" },
+  {
+    title: "Status",
+    dataIndex: "deletedAt",
+    key: "deletedAt",
+    customRender: ({ record }) => {
+      console.log({ record });
+      return record.deletedAt === null ? "Active" : "Inactive";
+    },
+  },
+  { title: "Actions", dataIndex: "actions", key: "actions" },
+];
 
 const userColumns = [
   { title: "First Name", dataIndex: "firstName", key: "firstName" },
@@ -244,19 +290,6 @@ const deletedUserColumns = [
     key: "roleName",
   },
   { title: "Operation", dataIndex: "operation", key: "operation" },
-];
-
-const userColumnsCsv = [
-  { title: "UUID", dataIndex: "id", key: "id" },
-  { title: "First Name", dataIndex: "firstName", key: "firstName" },
-  { title: "Last Name", dataIndex: "lastName", key: "lastName" },
-  { title: "Email", dataIndex: "email", key: "email" },
-  {
-    title: "Role",
-    dataIndex: "roleName",
-    key: "roleName",
-  },
-  { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
 ];
 
 function showRestoreConfirm(userId: string, name: string) {
@@ -311,23 +344,23 @@ function showPermanentDeleteConfirm(userId: string, name: string) {
 
 function showDeleteConfirm(userId: string, name: string) {
   Modal.confirm({
-    title: "Are you sure you want to Archive this user?",
+    title: "Are you sure you want to set this role to inactive?",
     icon: h(ExclamationCircleOutlined),
-    content: `This action will archive "${name}".`,
+    content: `This action will set this "${name}" to inactive.`,
     okText: "Yes",
     okType: "danger",
     cancelText: "Cancel",
     async onOk() {
       try {
-        await $fetch(`/api/users/${userId}`, {
+        await $fetch(`/api/admin/paginated-roles/${userId}`, {
           method: "DELETE",
           body: formState.value,
         });
-        fetchUsers();
-        fetchDeletedUsers();
-        message.success("User deleted successfully");
+        fetchRoles();
+        message.success("Role successfully inactive");
       } catch (err) {
-        console.error("Failed to delete user:", err);
+        console.log({ err });
+        message.error(err.message);
       }
     },
   });
@@ -368,87 +401,48 @@ function exportToCSV() {
   <div class="table-header">
     <a-input
       v-model:value="searchQuery"
-      placeholder="Search first, last name or email"
+      placeholder="Search role name"
       allow-clear
       class="mb-4 w-64 search-input"
       @input="onSearch"
     />
     <a-button class="pl-2" type="primary" @click="showAddModal">
       <div class="flex justify-center items-center space-x-2">
-        <UserAddOutlined />
-        <span>Add</span>
+        <span>Add Role</span>
       </div>
     </a-button>
-    <a-button class="export-btn" type="primary" @click="exportToCSV">
+    <!-- <a-button class="export-btn" type="primary" @click="exportToCSV">
       <div class="flex justify-center items-center space-x-2">
-        <CloudDownloadOutlined />
         <span>Export</span>
       </div>
-    </a-button>
+    </a-button> -->
   </div>
-  <a-tabs v-model:activeKey="activeKey">
-    <a-tab-pane key="1" tab="Users">
-      <a-table
-        :key="'users-table'"
-        :columns="userColumns"
-        :dataSource="filteredUsers"
-        :pagination="pagination"
-        :loading="loading"
-        @change="handleTableChange"
-        rowKey="id"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'actions'">
-            <div class="flex">
-              <a-button class="mr-20" @click="showEditModal(record)">
-                Edit
-              </a-button>
-              <a-button
-                @click="showDeleteConfirm(record.id, record.firstName)"
-                danger
-              >
-                Archive
-              </a-button>
-            </div>
-          </template>
-        </template>
-      </a-table>
-    </a-tab-pane>
-    <a-tab-pane key="2" tab="Archived">
-      <a-table
-        :key="'archived-users-table'"
-        :columns="deletedUserColumns"
-        :dataSource="filteredDeletedUsers"
-        :pagination="deletedUserPagination"
-        :loading="deletedUserLoading"
-        @change="handleTableChangeDeletedUsers"
-        rowKey="id"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'operation'">
-            <div class="flex">
-              <a-button
-                class="mr-20"
-                @click="showRestoreConfirm(record.id, record.firstName)"
-              >
-                Restore
-              </a-button>
-              <a-button
-                @click="showPermanentDeleteConfirm(record.id, record.firstName)"
-                danger
-              >
-                Delete
-              </a-button>
-            </div>
-          </template>
-        </template>
-      </a-table>
-    </a-tab-pane>
-  </a-tabs>
+  <a-table
+    :key="'users-table'"
+    :columns="roleColumns"
+    :dataSource="filteredRoles"
+    :pagination="pagination"
+    :loading="loading"
+    @change="handleTableChange"
+    rowKey="id"
+  >
+    <template #bodyCell="{ column, record }">
+      <template v-if="column.key === 'actions'">
+        <div class="flex">
+          <a-button class="mr-20" @click="showEditModal(record)">
+            Edit
+          </a-button>
+          <a-button @click="showDeleteConfirm(record.id, record.name)" danger>
+            set Inactive
+          </a-button>
+        </div>
+      </template>
+    </template>
+  </a-table>
   <a-modal
     :get-container="false"
     v-model:visible="showModal"
-    :title="isEdit ? 'Edit User' : 'Add User'"
+    :title="isEdit ? 'Edit Role' : 'Add Role'"
     :confirmLoading="loading"
     @ok="handleOk"
     @cancel="handleCancel"
@@ -456,66 +450,16 @@ function exportToCSV() {
     <a-form
       :model="formState"
       :rules="{
-        firstName: [
-          { required: true, message: 'First Name is required' },
+        name: [
+          { required: true, message: 'Name is required' },
           { min: 1, message: 'First Name must be at least 1 characters' },
-        ],
-        lastName: [
-          { required: true, message: 'Last Name is required' },
-          { min: 1, message: 'Last Name must be at least 1 characters' },
-        ],
-        email: [
-          { required: true, message: 'Email is required' },
-          { type: 'email', message: 'Invalid email' },
-        ],
-        password: [
-          { required: true, message: 'Password is required' },
-          { min: 6, message: 'Password must be at least 6 characters' },
-        ],
-        confirmPassword: [
-          { required: true, message: 'Please confirm your password' },
-          { validator: confirmPasswordValidator, trigger: 'blur' },
         ],
       }"
       ref="formRef"
       layout="vertical"
     >
-      <a-form-item label="First Name" name="firstName">
-        <a-input
-          v-model:value="formState.firstName"
-          placeholder="Enter First name"
-        />
-      </a-form-item>
-      <a-form-item label="Last Name" name="lastName">
-        <a-input
-          v-model:value="formState.lastName"
-          placeholder="Enter Last name"
-        />
-      </a-form-item>
-      <a-form-item label="Email" name="email">
-        <a-input
-          v-model:value="formState.email"
-          type="email"
-          placeholder="Enter email"
-        />
-      </a-form-item>
-      <a-form-item v-if="!isEdit" label="Password" name="password">
-        <a-input
-          v-model:value="formState.password"
-          type="password"
-          placeholder="Enter password"
-        />
-      </a-form-item>
-      <a-form-item
-        v-if="!isEdit"
-        label="Confirm Password"
-        name="confirmPassword"
-      >
-        <a-input
-          v-model:value="formState.confirmPassword"
-          type="password"
-          placeholder="Enter confirm password"
-        />
+      <a-form-item label="Role Name" name="firstName">
+        <a-input v-model:value="formState.name" placeholder="Enter Role Name" />
       </a-form-item>
     </a-form>
   </a-modal>
